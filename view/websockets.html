@@ -1,0 +1,239 @@
+
+
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+
+<body>
+    
+<form method="POST" action="/api/v0/orders" id="create_order">
+    <input type="text" name="client_order_id" id="client_order_id" placeholder="client_order_id" /><br>
+    <input type="text" name="symbol" id="symbol" placeholder="symbol" /><br>
+    <input step="0.0000001" type="text" name="qty" id="qty" placeholder="qty" /><br>
+    <input type="text" name="side" id="side" placeholder="side" /><br>
+    <input type="text" name="order_type" id="order_type" placeholder="order_type" /><br>
+    <input type="text" name="time_in_force" id="time_in_force" placeholder="time_in_force" /><br>
+    <input step="0.0000001" type="text" name="limit_price" id="limit_price" placeholder="limit_price" /><br>
+    <input step="0.0000001" type="text" name="stop_price" id="stop_price" placeholder="stop_price" /><br>
+    <input type="submit" />
+</form>
+
+<div id="result"></div>
+
+<!-- curl -H "Content-Type: application/json" \
+    -H "APCA-API-KEY-ID: 6356a601-84fb-4e44-827d-8845ff9b1061" \
+    -H "APCA-API-SECRET-KEY: 6356a601-84fb-4e44-827d-8845ff9b1061" \
+    --request POST \
+    --data '{"client_order_id": "hello26","symbol": "BTC/USDC","qty": "2","side": "buy","order_type": "limit","limit_price": "4000", "time_in_force": "gtc"}' \
+    http://localhost:8000/api/v0/orders -->
+
+
+<pre id="status"></pre>
+<pre>From the price calculator:</pre>
+<pre>Average Weighted Ask:</pre>
+<pre id="best_ask"></pre>
+<pre>Average Weighted Bid:</pre>
+<pre id="best_bid"></pre>
+<table>
+    <thead>
+        <tr>
+            <td width="300" colspan="1">Top 10 Sells:</td>
+            <td width="300" colspan="1">Top 10 Bids:</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr valign="top">
+            <td width="300">
+                <pre id="top_10_asks"></pre>
+            </td>
+            <td width="300">
+                <pre id="top_10_bids"></pre>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<table>
+    <thead>
+        <tr>
+            <td width="600" colspan="2">Binance</td>
+            <td width="600" colspan="2">Poloniex</td>
+        </tr>
+        <tr>
+            <td width="300">Lowest Ask</td>
+            <td width="300">Highest Bid</td>
+            <td width="300">Lowest Ask</td>
+            <td width="300">Highest Bid</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr valign="top">
+            <td width="300">
+                <pre id="bin_asks"></pre>
+            </td>
+            <td width="300">
+                <pre id="bin_bids"></pre>
+            </td>
+            <td width="300">
+                <pre id="polo_asks"></pre>
+            </td>
+            <td width="300">
+                <pre id="polo_bids"></pre>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+</body>
+    
+</html>
+
+
+<script>
+
+    function objectifyForm(formArray) {//serialize data function
+        var returnArray = {};
+        formArray.forEach((item, index) => {
+            returnArray[item.name] = item.value;
+        });
+        return returnArray;
+    }
+
+    $("#create_order").submit( function(event){
+        event.preventDefault();
+        var data = $('#create_order').serializeArray();
+        var dataobj = objectifyForm(data);
+        if (dataobj.stop_price == "") delete dataobj.stop_price;
+        if (dataobj.limit_price == "") delete dataobj.limit_price;
+        var myString = JSON.stringify(dataobj);
+        console.log(myString)
+        $.ajax({
+            type: "POST",
+            headers: {
+                'APCA-API-KEY-ID':'6356a601-84fb-4e44-827d-8845ff9b1061',
+                'APCA-API-SECRET-KEY':'6356a601-84fb-4e44-827d-8845ff9b1061',
+            },
+            url: "/api/v0/orders",
+            data: myString,
+            success: function(success){
+                $("#result").append(success);
+            },
+            dataType: "json",
+            contentType : "application/json"
+        });
+    });
+</script>
+
+
+<!-- the messages will be shown here -->
+<!-- import the iris client-side library for browser-->
+<script src="/iris-ws.js"></script>
+
+<script>
+    var scheme = document.location.protocol == "https:" ? "wss" : "ws";
+    var port = document.location.port ? (":" + document.location.port) : "";
+    // see app.Get("/echo", ws.Handler()) on main.go
+    var wsURL = scheme + "://" + document.location.hostname + port+"/echo";
+
+    var status = document.getElementById("status");
+    var bin_bids = document.getElementById("bin_bids");
+    var bin_asks = document.getElementById("bin_asks");
+    var polo_bids = document.getElementById("polo_bids");
+    var polo_asks = document.getElementById("polo_asks");
+    var top_10_bids = document.getElementById("top_10_bids");
+    var top_10_asks = document.getElementById("top_10_asks");
+    var best_bid = document.getElementById("best_bid");
+    var best_ask = document.getElementById("best_ask");
+
+    // Ws comes from the auto-served '/iris-ws.js'
+    var socket = new Ws(wsURL)
+    socket.OnConnect(function () {
+        status.innerHTML += "Status: Connected\n";
+    });
+
+    socket.OnDisconnect(function () {
+        status.innerHTML += "Status: Disconnected\n";
+    });
+
+    // // read events from the server
+    // socket.On("bin_orderbook", function (msg) {
+    //     addMessage(msg, "bin");
+    // });
+    // // read events from the server
+    // socket.On("polo_orderbook", function (msg) {
+    //     addMessage(msg, "polo");
+    // });
+
+    socket.On("bin_orderbook_buy", function(msg) {
+        addOrderMessage(msg, "bid", "binance");
+    });
+    socket.On("bin_orderbook_sell", function(msg) {
+        addOrderMessage(msg, "ask", "binance");
+    });
+    socket.On("polo_orderbook_buy", function(msg) {
+        addOrderMessage(msg, "bid", "poloniex");
+    });
+    socket.On("polo_orderbook_sell", function(msg) {
+        addOrderMessage(msg, "ask", "poloniex");
+    });
+    socket.On("consolidated_top_10_buy", function(msg) {
+        addTop10Orders(msg, "bid");
+    });
+    socket.On("consolidated_top_10_sell", function(msg) {
+        addTop10Orders(msg, "ask");
+    });
+    socket.On("bestBid", function (msg) {
+        addPriceMessage(msg, "bid");
+    });
+    socket.On("bestAsk", function (msg) {
+        addPriceMessage(msg, "ask");
+    });
+
+    function addMessage(msg, exchange) {
+        var obj = JSON.parse(msg);
+        var bidsMap = obj.Bids;
+        var asksMap = obj.Asks;
+        var bids = exchange == "bin" ? bin_bids : polo_bids;
+        var asks = exchange == "bin" ? bin_asks : polo_asks;
+        bids.innerHTML = "";
+        asks.innerHTML = "";
+
+        for (var price in bidsMap) {
+            bids.innerHTML = "<br>" + price/1000000 + ":" + bidsMap[price] + bids.innerHTML;
+        }
+        for (var price in asksMap) {
+            asks.innerHTML += "<br>" + price/1000000 + ":" + asksMap[price];
+        }
+    }
+
+    function addOrderMessage(msg, side, exchange) {
+        var obj = JSON.parse(msg);
+        var pre;
+        if (exchange == "binance") {
+            pre = side == "bid" ? bin_bids : bin_asks;
+        } else { // exchange == "poloniex"
+            pre = side == "bid" ? polo_bids : polo_asks;
+        }
+        pre.innerHTML = "Price: " + obj.Price + "<br>" 
+            + "Quantity: " + obj.Qty;
+    }
+
+    function addTop10Orders(msg, side) {
+        var obj = JSON.parse(msg);
+        var pre = side == "bid" ? top_10_bids : top_10_asks;
+        pre.innerHTML = "";
+        for (var i = 0; i < obj.length; i++) {
+            pre.innerHTML += (i+1).toString() + ") "
+                + "Price: " + obj[i].Price + ", "
+                + "Quantity: " + obj[i].Qty + ", "
+                + "Exchange: " + obj[i].ExchangeKey + "<br>";
+        }
+    }
+
+    function addPriceMessage(msg, side) {
+        var obj = JSON.parse(msg);
+        var pre = side == "bid" ? best_bid : best_ask;
+        pre.innerHTML = msg;
+    }
+</script>
