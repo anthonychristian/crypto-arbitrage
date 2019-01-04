@@ -1,7 +1,7 @@
 package indodax
 
 import (
-	"github.com/albertputrapurnama/arbitrage/orderbook"
+	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
 var idxOrderBook *orderbook.OrderBook

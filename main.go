@@ -3,10 +3,10 @@ package main
 import (
 	"time"
 
-	"github.com/albertputrapurnama/arbitrage/indodax"
-	"github.com/albertputrapurnama/arbitrage/orderbook"
-	"github.com/albertputrapurnama/arbitrage/websocket"
 	"github.com/alpacahq/gopaca/log"
+	"github.com/anthonychristian/crypto-arbitrage/indodax"
+	"github.com/anthonychristian/crypto-arbitrage/orderbook"
+	"github.com/anthonychristian/crypto-arbitrage/websocket"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris"
 	irisWs "github.com/kataras/iris/websocket"

@@ -1,7 +1,7 @@
 package orderbook
 
 import (
-	"github.com/albertputrapurnama/arbitrage/skiplist"
+	"github.com/anthonychristian/crypto-arbitrage/skiplist"
 	// "github.com/alpacahq/gopaca/log"
 	"github.com/shopspring/decimal"
 )

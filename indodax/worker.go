@@ -4,7 +4,7 @@ package indodax
 import (
 	"strconv"
 
-	"github.com/albertputrapurnama/arbitrage/orderbook"
+	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
 // Worker is the main engine for making order decisions

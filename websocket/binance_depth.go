@@ -8,8 +8,8 @@ import (
 	"time"
 
 	binance "github.com/adshao/go-binance"
-	"github.com/albertputrapurnama/arbitrage/orderbook"
 	"github.com/alpacahq/gopaca/log"
+	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
 const (
