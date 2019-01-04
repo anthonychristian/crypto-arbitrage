@@ -1,34 +1,25 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/albertputrapurnama/arbitrage/orderbook"
-	"github.com/albertputrapurnama/arbitrage/websocket"
-	"github.com/alpacahq/gopaca/log"
+	"github.com/anthonychristian/crypto-arbitrage/orderbook"
+	"github.com/anthonychristian/crypto-arbitrage/trade"
+	"github.com/anthonychristian/crypto-arbitrage/websocket"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris"
 	irisWs "github.com/kataras/iris/websocket"
 )
 
 func init() {
-	orderbook.Exchanges[orderbook.Binance] = orderbook.Exchange{Books: make(orderbook.OrderBookMap)}
-	initExchanges()
-}
-
-func initExchanges() {
-	for k := range orderbook.SymbolMap {
-		for _, ex := range orderbook.SymbolMap[k] {
-			orderbook.Exchanges[ex].Books[orderbook.Symbol(k)] = orderbook.NewOrderBook()
-		}
-	}
-	initOrderbookWebsocket()
+	trade.InitExchanges()
 }
 
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		fmt.Println("Error loading .env file")
 	}
 
 	app := iris.New()

@@ -2,14 +2,14 @@ package websocket
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
 
 	binance "github.com/adshao/go-binance"
-	"github.com/albertputrapurnama/arbitrage/orderbook"
-	"github.com/alpacahq/gopaca/log"
+	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
 const (
@@ -145,18 +145,18 @@ var wsDepthHandler = func(event *binance.WsDepthEvent) {
 
 	// Put the data received inside the queue
 	queueBinChan <- &data
-	// log.Info("UPDATE", "first", data.FirstUpdateID, "final", data.FinalUpdateID)
+	// fmt.Println("UPDATE", "first", data.FirstUpdateID, "final", data.FinalUpdateID)
 }
 
 var depthErrHandler = func(err error) {
-	log.Info("error", "err", err.Error())
+	fmt.Println("error", "err", err.Error())
 }
 
 // GetDepthFromBinance is the function used to start websocket connection to binance
 func GetDepthFromBinance() {
 	doneC, _, err := binance.WsDepthServe(binanceSymbol, wsDepthHandler, depthErrHandler)
 	if err != nil {
-		// log.Info("error", "err", err.Error())
+		// fmt.Println("error", "err", err.Error())
 		return
 	}
 	<-doneC
@@ -170,8 +170,8 @@ func manageBinanceOrderBook() {
 	AddBinOrderBookToSkipList(binOrderBook, depth.Bids, depth.Asks)
 	// update the lastUpdateID of the snapshot
 	lastUpdateID = depth.LastUpdateID
-	// log.Info("LastUpdateID", "FIRST LUI", lastUpdateID)
-	log.Info("Binance Orderbook Initialized")
+	// fmt.Println("LastUpdateID", "FIRST LUI", lastUpdateID)
+	fmt.Println("Binance Orderbook Initialized")
 }
 
 // Function to manage queue channel.
@@ -184,8 +184,8 @@ func manageBinanceQueue() {
 		if lastUpdateID != -1 {
 			v, ok := <-queueBinChan
 			if ok {
-				// log.Info("MQ", "LASTUPDATEID", lastUpdateID)
-				// log.Info("MQ", "PREVU", prevu)
+				// fmt.Println("MQ", "LASTUPDATEID", lastUpdateID)
+				// fmt.Println("MQ", "PREVU", prevu)
 				// ignore events where u <= lastUpdateID
 				if v.FinalUpdateID <= lastUpdateID {
 					continue
@@ -201,7 +201,7 @@ func manageBinanceQueue() {
 					}
 					prevu = v.FinalUpdateID
 					// for testing purposes
-					// log.Info("MANAGE QUEUE", "first", v.FirstUpdateID, "final", v.FinalUpdateID)
+					// fmt.Println("MANAGE QUEUE", "first", v.FirstUpdateID, "final", v.FinalUpdateID)
 				} else if prevu != -1 && v.FirstUpdateID == prevu+1 {
 					// Add the bids and asks to the SkipList OrderBook
 					for _, elem := range v.Bids {
@@ -212,13 +212,13 @@ func manageBinanceQueue() {
 					}
 					prevu = v.FinalUpdateID
 					// for testing purposes
-					// log.Info("MANAGE QUEUE", "first", v.FirstUpdateID, "final", v.FinalUpdateID)
+					// fmt.Println("MANAGE QUEUE", "first", v.FirstUpdateID, "final", v.FinalUpdateID)
 				}
 			}
 		} else {
 			_, ok := <-quitBinQueueChan
 			if ok {
-				// log.Info("quit")
+				// fmt.Println("quit")
 				return
 			}
 		}
@@ -228,20 +228,20 @@ func manageBinanceQueue() {
 func getBinanceDepth() binance.DepthResponse {
 	response, err := http.Get("https://www.binance.com/api/v1/depth?symbol=BTCUSDC&limit=1000")
 	if err != nil {
-		// log.Info("error", "err", err.Error())
+		// fmt.Println("error", "err", err.Error())
 		return binance.DepthResponse{}
 	}
 	defer response.Body.Close()
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		// log.Info("Error: ", "err", err)
+		// fmt.Println("Error: ", "err", err)
 		return binance.DepthResponse{}
 	}
 	// unmarshal JSON response
 	depthResponse := BinanceDepthResponse{}
 	jsonErr := json.Unmarshal(contents, &depthResponse)
 	if jsonErr != nil {
-		// log.Info("Error: ", "err", jsonErr)
+		// fmt.Println("Error: ", "err", jsonErr)
 		return binance.DepthResponse{}
 	}
 

@@ -1,39 +1,13 @@
 package orderbook
 
 import (
-	"github.com/albertputrapurnama/arbitrage/skiplist"
-	// "github.com/alpacahq/gopaca/log"
+	"github.com/anthonychristian/crypto-arbitrage/skiplist"
 	"github.com/shopspring/decimal"
 )
 
-type ExchangeMap map[ExchangeKey]Exchange
-
-var (
-	Exchanges = make(ExchangeMap)
-	ExFeeMap  = map[ExchangeKey]float64{ // Key: Exchange, Val: Fee
-		Binance: 1.001,
-		Polo:    1.002,
-	}
-)
-
-type ExchangeKey string
-
-const (
-	Binance      ExchangeKey = "Binance"
-	Polo         ExchangeKey = "Poloniex"
-	Alpaca       ExchangeKey = "APCA"
-	Consolidated ExchangeKey = "Consolidated"
-)
-
-type Exchange struct {
-	Books OrderBookMap // The key is the trading pair, e.g. "BTC/USDC"
-}
-
 type Order struct {
-	Price       float64 // Actual price on exchange
-	Qty         float64
-	FillCost    float64 // Percentage of the price for exchange trade cost, fees, etc
-	ExchangeKey ExchangeKey
+	Price float64 // Actual price on exchange
+	Qty   float64
 }
 
 type OrderBookMap map[Symbol]*OrderBook // Key is the currency pair, e.g. BTC/USDC
