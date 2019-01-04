@@ -12,17 +12,14 @@ var (
 	Exchanges = make(ExchangeMap)
 	ExFeeMap  = map[ExchangeKey]float64{ // Key: Exchange, Val: Fee
 		Binance: 1.001,
-		Polo:    1.002,
 	}
 )
 
 type ExchangeKey string
 
 const (
-	Binance      ExchangeKey = "Binance"
-	Polo         ExchangeKey = "Poloniex"
-	Alpaca       ExchangeKey = "APCA"
-	Consolidated ExchangeKey = "Consolidated"
+	Binance ExchangeKey = "Binance"
+	Indodax ExchangeKey = "Indodax"
 )
 
 type Exchange struct {

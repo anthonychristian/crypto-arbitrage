@@ -171,10 +171,10 @@
     socket.On("bin_orderbook_sell", function(msg) {
         addOrderMessage(msg, "ask", "binance");
     });
-    socket.On("polo_orderbook_buy", function(msg) {
+    socket.On("idx_orderbook_buy", function(msg) {
         addOrderMessage(msg, "bid", "poloniex");
     });
-    socket.On("polo_orderbook_sell", function(msg) {
+    socket.On("idx_orderbook_sell", function(msg) {
         addOrderMessage(msg, "ask", "poloniex");
     });
     socket.On("consolidated_top_10_buy", function(msg) {

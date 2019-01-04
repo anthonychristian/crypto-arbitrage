@@ -1,8 +1,8 @@
 package indodax
 
 type Depth struct {
-	Buy  []interface{} `json:"buy"`
-	Sell []interface{} `json:"sell"`
+	Buy  [][]interface{} `json:"buy"`
+	Sell [][]interface{} `json:"sell"`
 }
 
 type DepthPair struct {

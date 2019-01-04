@@ -33,7 +33,7 @@ func InitIndodax() *IndodaxAPI {
 	return IndodaxInstance
 }
 
-func (i *IndodaxAPI) getDepth(symbol string) (dat Depth) {
+func (i *IndodaxAPI) GetDepth(symbol string) (dat Depth) {
 	// check if symbol is valid
 	// build request
 	req, body, errs := i.req.Get(baseURL + symbol + endpoint).
