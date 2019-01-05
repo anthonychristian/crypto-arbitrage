@@ -6,7 +6,6 @@ import (
 
 	"github.com/anthonychristian/crypto-arbitrage/indodax"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
-	"github.com/anthonychristian/crypto-arbitrage/trade"
 	"github.com/anthonychristian/crypto-arbitrage/websocket"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris"
@@ -14,8 +13,7 @@ import (
 )
 
 func init() {
-	trade.InitExchanges()
-
+	orderbook.InitExchanges()
 	indodax.InitOrderBook()
 	initOrderbookWebsocket()
 	// initialize API gateway
@@ -74,7 +72,7 @@ func setupWebsocket(app *iris.Application) {
 
 func handleConnection(c irisWs.Connection) {
 	ticker := time.NewTicker(1 * time.Second)
-	binOrderBook := orderbook.Exchanges[orderbook.Binance].Books[orderbook.BTC_USDC]
+	binOrderBook := orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT]
 	idxOrderBook := indodax.GetOB()
 	go func() {
 		for range ticker.C {

@@ -22,13 +22,13 @@ const (
 )
 
 // GetLeftCurrency returns the left currency in the symbol
-func GetLeftCurrency(symbol string) string {
-	currencies := strings.Split(symbol, "/")
-	return currencies[0]
+func GetLeftCurrency(symbol Symbol) Currency {
+	currencies := strings.Split(string(symbol), "/")
+	return Currency(currencies[0])
 }
 
 // GetRightCurrency returns the right currency in the symbol
-func GetRightCurrency(symbol string) string {
-	currencies := strings.Split(symbol, "/")
-	return currencies[1]
+func GetRightCurrency(symbol Symbol) Currency {
+	currencies := strings.Split(string(symbol), "/")
+	return Currency(currencies[1])
 }

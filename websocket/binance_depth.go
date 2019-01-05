@@ -10,12 +10,11 @@ import (
 
 	binance "github.com/adshao/go-binance"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
-	"github.com/anthonychristian/crypto-arbitrage/trade"
 )
 
 const (
 	// Bitcoin Symbol
-	binanceSymbol = "BTCUSDC"
+	binanceSymbol = "ETHUSDT"
 )
 
 // BinanceDepthResponse is the type retrieved from the first orderbook snapshot
@@ -112,7 +111,7 @@ func AddBinanceAskEventToSkipList(sl *orderbook.OrderBook, v *binance.Ask) {
 
 // InitBinanceHandler is used to initialize orderbook and websocket handler
 func InitBinanceHandler() {
-	binOrderBook = trade.Exchanges[orderbook.Binance].Books[orderbook.BTC_USDC]
+	binOrderBook = orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT]
 	if lastUpdateID != -1 {
 		lastUpdateID = -1
 		prevu = -1

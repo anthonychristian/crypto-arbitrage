@@ -59,9 +59,8 @@ func updateDepth(d Depth) {
 			panic(err)
 		}
 		newOrder := orderbook.Order{
-			Price:       elem[0].(float64),
-			Qty:         q,
-			ExchangeKey: orderbook.Indodax,
+			Price: elem[0].(float64),
+			Qty:   q,
 		}
 		idxOrderBook.AddBuy(newOrder)
 	}
@@ -71,9 +70,8 @@ func updateDepth(d Depth) {
 			panic(err)
 		}
 		newOrder := orderbook.Order{
-			Price:       elem[0].(float64),
-			Qty:         q,
-			ExchangeKey: orderbook.Indodax,
+			Price: elem[0].(float64),
+			Qty:   q,
 		}
 		idxOrderBook.AddSell(newOrder)
 	}
