@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/anthonychristian/crypto-arbitrage/indodax"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 	"github.com/anthonychristian/crypto-arbitrage/trade"
 	"github.com/anthonychristian/crypto-arbitrage/websocket"
@@ -14,6 +15,11 @@ import (
 
 func init() {
 	trade.InitExchanges()
+
+	indodax.InitOrderBook()
+	initOrderbookWebsocket()
+	// initialize API gateway
+	_ = indodax.InitIndodax()
 }
 
 func main() {
@@ -27,10 +33,23 @@ func main() {
 		ctx.ServeFile("view/websockets.html", false)
 	})
 
+	go updateDepthToWorker()
+
 	// Using iris websocket to show orderbook updates (for testing purposes)
 	// Open Localhost 8080 to start orderbook websocket
 	setupWebsocket(app)
 	app.Run(iris.Addr(":8080"))
+}
+
+func updateDepthToWorker() {
+	worker := indodax.InitWorker()
+	ticker := time.NewTicker(5 * time.Second)
+	go func() {
+		for range ticker.C {
+			d := indodax.IndodaxInstance.GetDepth("eth_idr")
+			worker.PushDepthUpdate(d)
+		}
+	}()
 }
 
 func initOrderbookWebsocket() {
@@ -56,6 +75,7 @@ func setupWebsocket(app *iris.Application) {
 func handleConnection(c irisWs.Connection) {
 	ticker := time.NewTicker(1 * time.Second)
 	binOrderBook := orderbook.Exchanges[orderbook.Binance].Books[orderbook.BTC_USDC]
+	idxOrderBook := indodax.GetOB()
 	go func() {
 		for range ticker.C {
 			if !binOrderBook.Empty() {
@@ -82,6 +102,10 @@ func handleConnection(c irisWs.Connection) {
 				// })
 				c.Emit("bin_orderbook_buy", binOrderBook.TopPriceBuySide())
 				c.Emit("bin_orderbook_sell", binOrderBook.LowPriceSellSide())
+			}
+			if !idxOrderBook.Empty() {
+				c.Emit("idx_orderbook_buy", idxOrderBook.TopPriceBuySide())
+				c.Emit("idx_orderbook_sell", idxOrderBook.LowPriceSellSide())
 			}
 		}
 	}()

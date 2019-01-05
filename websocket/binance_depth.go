@@ -10,6 +10,7 @@ import (
 
 	binance "github.com/adshao/go-binance"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
+	"github.com/anthonychristian/crypto-arbitrage/trade"
 )
 
 const (
@@ -69,10 +70,8 @@ func AddBinOrderBookToSkipList(sl *orderbook.OrderBook, bids []binance.Bid, asks
 		fQty, _ := strconv.ParseFloat(elem.Quantity, 64)
 		fPrice, _ := strconv.ParseFloat(elem.Price, 64)
 		newOrder := orderbook.Order{
-			Price:       fPrice,
-			ExchangeKey: orderbook.Binance,
-			FillCost:    orderbook.ExFeeMap[orderbook.Binance],
-			Qty:         fQty,
+			Price: fPrice,
+			Qty:   fQty,
 		}
 		sl.AddBuy(newOrder)
 	}
@@ -80,10 +79,8 @@ func AddBinOrderBookToSkipList(sl *orderbook.OrderBook, bids []binance.Bid, asks
 		fQty, _ := strconv.ParseFloat(elem.Quantity, 64)
 		fPrice, _ := strconv.ParseFloat(elem.Price, 64)
 		newOrder := orderbook.Order{
-			Price:       fPrice,
-			ExchangeKey: orderbook.Binance,
-			FillCost:    orderbook.ExFeeMap[orderbook.Binance],
-			Qty:         fQty,
+			Price: fPrice,
+			Qty:   fQty,
 		}
 		sl.AddSell(newOrder)
 	}
@@ -94,10 +91,8 @@ func AddBinanceBidEventToSkipList(sl *orderbook.OrderBook, v *binance.Bid) {
 	fQty, _ := strconv.ParseFloat(v.Quantity, 64)
 	fPrice, _ := strconv.ParseFloat(v.Price, 64)
 	orderToAdd := orderbook.Order{
-		Price:       fPrice,
-		ExchangeKey: orderbook.Binance,
-		FillCost:    orderbook.ExFeeMap[orderbook.Binance],
-		Qty:         fQty,
+		Price: fPrice,
+		Qty:   fQty,
 	}
 	sl.AddBuy(orderToAdd)
 }
@@ -107,10 +102,8 @@ func AddBinanceAskEventToSkipList(sl *orderbook.OrderBook, v *binance.Ask) {
 	fQty, _ := strconv.ParseFloat(v.Quantity, 64)
 	fPrice, _ := strconv.ParseFloat(v.Price, 64)
 	orderToAdd := orderbook.Order{
-		Price:       fPrice,
-		ExchangeKey: orderbook.Binance,
-		FillCost:    orderbook.ExFeeMap[orderbook.Binance],
-		Qty:         fQty,
+		Price: fPrice,
+		Qty:   fQty,
 	}
 	sl.AddSell(orderToAdd)
 }
@@ -119,7 +112,7 @@ func AddBinanceAskEventToSkipList(sl *orderbook.OrderBook, v *binance.Ask) {
 
 // InitBinanceHandler is used to initialize orderbook and websocket handler
 func InitBinanceHandler() {
-	binOrderBook = orderbook.Exchanges[orderbook.Binance].Books[orderbook.BTC_USDC]
+	binOrderBook = trade.Exchanges[orderbook.Binance].Books[orderbook.BTC_USDC]
 	if lastUpdateID != -1 {
 		lastUpdateID = -1
 		prevu = -1
