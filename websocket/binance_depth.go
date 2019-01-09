@@ -218,7 +218,7 @@ func manageBinanceQueue() {
 }
 
 func getBinanceDepth() binance.DepthResponse {
-	response, err := http.Get("https://www.binance.com/api/v1/depth?symbol=BTCUSDC&limit=1000")
+	response, err := http.Get("https://www.binance.com/api/v1/depth?symbol=ETHUSDT&limit=1000")
 	if err != nil {
 		// fmt.Println("error", "err", err.Error())
 		return binance.DepthResponse{}
