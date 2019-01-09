@@ -7,9 +7,7 @@ import (
 var idxOrderBook *orderbook.OrderBook
 
 func InitOrderBook() {
-	if idxOrderBook == nil {
-		idxOrderBook = orderbook.NewOrderBook()
-	}
+	idxOrderBook = orderbook.Exchanges[orderbook.Indodax].Books[orderbook.ETH_IDR]
 }
 
 func GetOB() *orderbook.OrderBook {
