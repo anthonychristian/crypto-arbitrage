@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/anthonychristian/crypto-arbitrage/trade"
+
 	binance "github.com/adshao/go-binance"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
@@ -83,6 +85,9 @@ func AddBinOrderBookToSkipList(sl *orderbook.OrderBook, bids []binance.Bid, asks
 		}
 		sl.AddSell(newOrder)
 	}
+	for _, worker := range trade.TradeWorkers[orderbook.Binance] {
+		worker.ObUpdated <- true
+	}
 }
 
 // AddBinanceBidEventToSkipList is used to add the Bid Event to the Skiplist, with restrictions
@@ -94,6 +99,9 @@ func AddBinanceBidEventToSkipList(sl *orderbook.OrderBook, v *binance.Bid) {
 		Qty:   fQty,
 	}
 	sl.AddBuy(orderToAdd)
+	for _, worker := range trade.TradeWorkers[orderbook.Binance] {
+		worker.ObUpdated <- true
+	}
 }
 
 // AddBinanceAskEventToSkipList is used to add the Ask Event to the Skiplist, with restrictions
@@ -105,6 +113,9 @@ func AddBinanceAskEventToSkipList(sl *orderbook.OrderBook, v *binance.Ask) {
 		Qty:   fQty,
 	}
 	sl.AddSell(orderToAdd)
+	for _, worker := range trade.TradeWorkers[orderbook.Binance] {
+		worker.ObUpdated <- true
+	}
 }
 
 // Functions to manage local order book

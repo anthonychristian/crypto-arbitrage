@@ -6,6 +6,7 @@ import (
 
 	"github.com/anthonychristian/crypto-arbitrage/indodax"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
+	"github.com/anthonychristian/crypto-arbitrage/trade"
 	"github.com/anthonychristian/crypto-arbitrage/websocket"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris"
@@ -18,6 +19,7 @@ func init() {
 	initOrderbookWebsocket()
 	// initialize API gateway
 	_ = indodax.InitIndodax()
+	trade.InitEthUsdtIdr()
 }
 
 func main() {

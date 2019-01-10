@@ -60,7 +60,7 @@ func execReverseCalc(a float64, b CalcParts) (float64, error) {
 	}
 }
 
-func detectArbitrage(pairs []Pair) (start float64, end float64, qty float64, err error) {
+func detectArbitrage(pairs []Pair, exchanges orderbook.ExchangeMap) (start float64, end float64, qty float64, notProfitable bool, err error) {
 	// starting currency set owned = 1
 	// if sell = left curr
 	// if buy = right curr
@@ -77,13 +77,13 @@ func detectArbitrage(pairs []Pair) (start float64, end float64, qty float64, err
 	calcs := []CalcParts{}
 
 	for index, pair := range pairs {
-		ob := orderbook.Exchanges[pair.exchange].Books[pair.symbol]
+		ob := exchanges[pair.exchange].Books[pair.symbol]
 		leftCurr := orderbook.GetLeftCurrency(pair.symbol)
 		rightCurr := orderbook.GetRightCurrency(pair.symbol)
 		var bestPrice orderbook.Order
 		if pair.side == Buy {
 			if owned.curr != rightCurr {
-				return 0, 0, 0, errors.New("wrong starting currency " + string(owned.curr))
+				return 0, 0, 0, false, errors.New("wrong starting currency " + string(owned.curr))
 			}
 			bestPrice = ob.LowPriceSellSide()
 			// if buy -> now own the left curr
@@ -101,7 +101,7 @@ func detectArbitrage(pairs []Pair) (start float64, end float64, qty float64, err
 			})
 		} else {
 			if owned.curr != leftCurr {
-				return 0, 0, 0, errors.New("wrong starting currency " + string(owned.curr))
+				return 0, 0, 0, false, errors.New("wrong starting currency " + string(owned.curr))
 			}
 			bestPrice = ob.TopPriceBuySide()
 			// if sell -> now own the right curr
@@ -140,13 +140,13 @@ func detectArbitrage(pairs []Pair) (start float64, end float64, qty float64, err
 		if nextPair.exchange != pair.exchange {
 			withdrawFee, err := orderbook.WithdrawFee(pair.exchange, owned.curr, owned.qty)
 			if err != nil {
-				return 0, 0, 0, err
+				return 0, 0, 0, false, err
 			}
 			owned.qty -= withdrawFee
 			// for funds calculation
 			withdrawFee, err = orderbook.WithdrawFee(pair.exchange, owned.curr, owned.funds)
 			if err != nil {
-				return 0, 0, 0, err
+				return 0, 0, 0, false, err
 			}
 			owned.funds -= withdrawFee
 			calcs = append(calcs, CalcParts{
@@ -160,7 +160,7 @@ func detectArbitrage(pairs []Pair) (start float64, end float64, qty float64, err
 		}
 	}
 	if owned.curr != startCurr {
-		return 0, 0, 0, errors.New("Cycle incomplete! Started with " + string(startCurr) + " end with " + string(owned.curr))
+		return 0, 0, 0, false, errors.New("Cycle incomplete! Started with " + string(startCurr) + " end with " + string(owned.curr))
 	}
 
 	endingFund := owned.funds
@@ -173,7 +173,7 @@ func detectArbitrage(pairs []Pair) (start float64, end float64, qty float64, err
 			endFund := owned.funds
 			owned.funds, err = execReverseCalc(owned.funds, b)
 			if err != nil {
-				return 0, 0, 0, err
+				return 0, 0, 0, false, err
 			}
 			owned.curr = b.prevCurr
 
@@ -195,14 +195,14 @@ func detectArbitrage(pairs []Pair) (start float64, end float64, qty float64, err
 			}
 		}
 		if owned.curr != startCurr {
-			return owned.funds, endingFund, owned.qty, errors.New("Traceback cycle wrong! Started with " + string(startCurr) + " end with " + string(owned.curr))
+			return owned.funds, endingFund, owned.qty, false, errors.New("Traceback cycle wrong! Started with " + string(startCurr) + " end with " + string(owned.curr))
 		}
 
 		if endingFund < owned.funds {
-			return owned.funds, endingFund, owned.qty, errors.New("Not profitable for available qty, starting fund = " + strconv.FormatFloat(owned.funds, 'f', -1, 64) + " ending fund = " + strconv.FormatFloat(endingFund, 'f', -1, 64))
+			return owned.funds, endingFund, owned.qty, true, errors.New("Not profitable for available qty, starting fund = " + strconv.FormatFloat(owned.funds, 'f', -1, 64) + " ending fund = " + strconv.FormatFloat(endingFund, 'f', -1, 64))
 		}
 
-		return owned.funds, endingFund, owned.qty, nil
+		return owned.funds, endingFund, owned.qty, false, nil
 	}
-	return owned.funds, endingFund, owned.qty, errors.New("Not profitable, final qty = " + strconv.FormatFloat(owned.qty, 'f', -1, 64))
+	return owned.funds, endingFund, owned.qty, true, errors.New("Not profitable, final qty = " + strconv.FormatFloat(owned.qty, 'f', -1, 64))
 }
