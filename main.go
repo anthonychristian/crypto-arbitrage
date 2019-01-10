@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/anthonychristian/crypto-arbitrage/indodax"
@@ -14,20 +15,25 @@ import (
 )
 
 func init() {
-	orderbook.InitExchanges()
-	indodax.InitOrderBook()
-	initOrderbookWebsocket()
-	// initialize API gateway
-	_ = indodax.InitIndodax()
-	trade.InitEthUsdtIdr()
-}
-
-func main() {
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
 
+	orderbook.InitExchanges()
+	indodax.InitOrderBook()
+	initOrderbookWebsocket()
+
+	// initialize API gateway
+<<<<<<< HEAD
+	_ = indodax.InitIndodax()
+	trade.InitEthUsdtIdr()
+=======
+	_ = indodax.InitIndodax(os.Getenv("IDX_API_KEY"), os.Getenv("IDX_SECRET_KEY"))
+>>>>>>> 2c685a0978bb4d3d7447eaffb68a840f929e8fd5
+}
+
+func main() {
 	app := iris.New()
 	app.Get("/", func(ctx iris.Context) {
 		ctx.ServeFile("view/websockets.html", false)
