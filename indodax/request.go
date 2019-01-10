@@ -6,6 +6,8 @@ package indodax
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/parnurzeal/gorequest"
 )
@@ -67,7 +69,8 @@ func (i *IndodaxAPI) GetDepth(symbol string) (dat Depth) {
 }
 
 func (i *IndodaxAPI) GetInfo() interface{} {
-	params := "nonce=1&method=getInfo"
+	timeStr := strconv.FormatInt(time.Now().Unix(), 10)
+	params := "method=getInfo&nonce=" + timeStr
 	// build request
 	resp, body, errs := i.req.
 		Post(APIBaseURL).
