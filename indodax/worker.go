@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anthonychristian/crypto-arbitrage/indodax"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
@@ -21,20 +20,22 @@ type Worker struct {
 var IndodaxWorkers map[orderbook.Symbol]*Worker
 
 func InitAllWorkers() {
+	IndodaxWorkers = make(map[orderbook.Symbol]*Worker)
 	for _, symbol := range orderbook.ExSymbolMap[orderbook.Indodax] {
 		worker := InitWorker(symbol)
-		updateDepthToWorker(worker, symbol)
+		go updateDepthToWorker(worker)
 	}
 }
 
 // InitWorker instances
 func InitWorker(symbol orderbook.Symbol) *Worker {
 	newWorker := &Worker{
-		depth: make(chan Depth),
+		depth:  make(chan Depth),
+		symbol: symbol,
 	}
 	IndodaxWorkers[symbol] = newWorker
 	go IndodaxWorkers[symbol].work()
-	return newWorker
+	return IndodaxWorkers[symbol]
 }
 
 // Halt to halt the worker from doing actions
@@ -73,7 +74,7 @@ func updateDepth(d Depth, symbol orderbook.Symbol) {
 			Price: elem[0].(float64),
 			Qty:   q,
 		}
-		idxOrderBooks[symbol].AddBuy(newOrder)
+		orderbook.Exchanges[orderbook.Indodax].Books[symbol].AddBuy(newOrder)
 	}
 	for _, elem := range d.Sell {
 		q, err := strconv.ParseFloat(elem[1].(string), 64)
@@ -84,16 +85,16 @@ func updateDepth(d Depth, symbol orderbook.Symbol) {
 			Price: elem[0].(float64),
 			Qty:   q,
 		}
-		idxOrderBooks[symbol].AddSell(newOrder)
+		orderbook.Exchanges[orderbook.Indodax].Books[symbol].AddSell(newOrder)
 	}
 }
 
-func updateDepthToWorker(worker *Worker, symbol orderbook.Symbol) {
-	symbolString := strings.ToLower(orderbook.GetLeftCurrency(symbol) + "_" + orderbook.GetRightCurrency(symbol))
-	ticker := time.NewTicker(5 * time.Second)
+func updateDepthToWorker(worker *Worker) {
+	symbolString := strings.ToLower(string(orderbook.GetLeftCurrency(worker.symbol)) + "_" + string(orderbook.GetRightCurrency(worker.symbol)))
+	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for range ticker.C {
-			d := indodax.IndodaxInstance.GetDepth(symbolString)
+			d := IndodaxInstance.GetDepth(symbolString)
 			worker.PushDepthUpdate(d)
 		}
 	}()

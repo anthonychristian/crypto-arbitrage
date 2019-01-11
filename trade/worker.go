@@ -2,6 +2,7 @@ package trade
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
@@ -37,9 +38,7 @@ func (w *Worker) work() {
 		select {
 		case _ = <-w.ObUpdated:
 			exchanges := copy(orderbook.Exchanges)
-			fmt.Println("1")
 			tradeWorker(w.pairs, exchanges)
-			fmt.Println("2")
 		case <-w.halt:
 			return
 		}
@@ -48,20 +47,19 @@ func (w *Worker) work() {
 
 func tradeWorker(pairs []Pair, exchanges orderbook.ExchangeMap) {
 	var totalQty float64
-	for {
-		fmt.Println("hello")
+	ticker := time.NewTicker(1 * time.Second)
+	for range ticker.C {
 		start, end, qty, notProfitable, err := detectArbitrage(pairs, exchanges)
 		if err != nil {
 			if notProfitable && totalQty > 0 {
 				// HEDGE
-				fmt.Println("HEDGE NOW", start, end, qty, totalQty)
+				fmt.Println("HEDGE NOW start:", start, "end:", end, "qty:", qty, "totalQty:", totalQty)
 			} else {
 				totalQty = 0
 				fmt.Println(start, end, qty, notProfitable, err)
 			}
 		}
 		totalQty += qty
-		fmt.Println(totalQty)
 	}
 }
 

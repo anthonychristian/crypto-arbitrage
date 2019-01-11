@@ -56,8 +56,9 @@
 <table>
     <thead>
         <tr>
-            <td width="600" colspan="2">Binance</td>
-            <td width="600" colspan="2">Poloniex</td>
+            <td width="400" colspan="2">Binance ETH/USDT</td>
+            <td width="400" colspan="2">Indodax ETH/IDR</td>
+            <td width="400" colspan="2">Indodax USDT/IDR</td>
         </tr>
         <tr>
             <td width="300">Lowest Ask</td>
@@ -75,10 +76,16 @@
                 <pre id="bin_bids"></pre>
             </td>
             <td width="300">
-                <pre id="polo_asks"></pre>
+                <pre id="idx_asks"></pre>
             </td>
             <td width="300">
-                <pre id="polo_bids"></pre>
+                <pre id="idx_bids"></pre>
+            </td>
+            <td width="300">
+                <pre id="idx_asks_usdt"></pre>
+            </td>
+            <td width="300">
+                <pre id="idx_bids_usdt"></pre>
             </td>
         </tr>
     </tbody>
@@ -139,8 +146,10 @@
     var status = document.getElementById("status");
     var bin_bids = document.getElementById("bin_bids");
     var bin_asks = document.getElementById("bin_asks");
-    var polo_bids = document.getElementById("polo_bids");
-    var polo_asks = document.getElementById("polo_asks");
+    var idx_bids = document.getElementById("idx_bids");
+    var idx_asks = document.getElementById("idx_asks");
+    var idx_bids_usdt = document.getElementById("idx_bids_usdt");
+    var idx_asks_usdt = document.getElementById("idx_asks_usdt");
     var top_10_bids = document.getElementById("top_10_bids");
     var top_10_asks = document.getElementById("top_10_asks");
     var best_bid = document.getElementById("best_bid");
@@ -161,8 +170,8 @@
     //     addMessage(msg, "bin");
     // });
     // // read events from the server
-    // socket.On("polo_orderbook", function (msg) {
-    //     addMessage(msg, "polo");
+    // socket.On("idx_orderbook", function (msg) {
+    //     addMessage(msg, "idx");
     // });
 
     socket.On("bin_orderbook_buy", function(msg) {
@@ -172,10 +181,16 @@
         addOrderMessage(msg, "ask", "binance");
     });
     socket.On("idx_orderbook_buy", function(msg) {
-        addOrderMessage(msg, "bid", "poloniex");
+        addOrderMessage(msg, "bid", "idx");
     });
     socket.On("idx_orderbook_sell", function(msg) {
-        addOrderMessage(msg, "ask", "poloniex");
+        addOrderMessage(msg, "ask", "idx");
+    });
+    socket.On("idx_orderbook_buy_usdt", function(msg) {
+        addOrderMessage(msg, "bid", "idx_usdt");
+    });
+    socket.On("idx_orderbook_sell_usdt", function(msg) {
+        addOrderMessage(msg, "ask", "idx_usdt");
     });
     socket.On("consolidated_top_10_buy", function(msg) {
         addTop10Orders(msg, "bid");
@@ -194,16 +209,16 @@
         var obj = JSON.parse(msg);
         var bidsMap = obj.Bids;
         var asksMap = obj.Asks;
-        var bids = exchange == "bin" ? bin_bids : polo_bids;
-        var asks = exchange == "bin" ? bin_asks : polo_asks;
+        var bids = exchange == "bin" ? bin_bids : idx_bids;
+        var asks = exchange == "bin" ? bin_asks : idx_asks;
         bids.innerHTML = "";
         asks.innerHTML = "";
 
         for (var price in bidsMap) {
-            bids.innerHTML = "<br>" + price/1000000 + ":" + bidsMap[price] + bids.innerHTML;
+            bids.innerHTML = "<br>" + price + ":" + bidsMap[price] + bids.innerHTML;
         }
         for (var price in asksMap) {
-            asks.innerHTML += "<br>" + price/1000000 + ":" + asksMap[price];
+            asks.innerHTML += "<br>" + price + ":" + asksMap[price];
         }
     }
 
@@ -212,8 +227,10 @@
         var pre;
         if (exchange == "binance") {
             pre = side == "bid" ? bin_bids : bin_asks;
-        } else { // exchange == "poloniex"
-            pre = side == "bid" ? polo_bids : polo_asks;
+        } else if (exchange == "idx") { // exchange == "idx"
+            pre = side == "bid" ? idx_bids : idx_asks;
+        } else {
+            pre = side == "bid" ? idx_bids_usdt : idx_asks_usdt;
         }
         pre.innerHTML = "Price: " + obj.Price + "<br>" 
             + "Quantity: " + obj.Qty;

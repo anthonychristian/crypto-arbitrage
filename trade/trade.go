@@ -2,7 +2,6 @@ package trade
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"strconv"
 
@@ -78,6 +77,9 @@ func detectArbitrage(pairs []Pair, exchanges orderbook.ExchangeMap) (start float
 
 	for index, pair := range pairs {
 		ob := exchanges[pair.exchange].Books[pair.symbol]
+		if ob.Empty() {
+			return 0, 0, 0, false, errors.New("ob not initialized for" + string(pair.symbol))
+		}
 		leftCurr := orderbook.GetLeftCurrency(pair.symbol)
 		rightCurr := orderbook.GetRightCurrency(pair.symbol)
 		var bestPrice orderbook.Order
@@ -184,14 +186,12 @@ func detectArbitrage(pairs []Pair, exchanges orderbook.ExchangeMap) (start float
 				bestPrice.Qty -= endFund
 				b.orderbook.AddSell(bestPrice)
 				bestPrice = b.orderbook.LowPriceSellSide()
-				fmt.Println(bestPrice)
 			} else if b.action == "sell" {
 				bestPrice := b.orderbook.TopPriceBuySide()
 				// selling qty = amount sold (amount had originally) = owned.funds
 				bestPrice.Qty -= owned.funds
 				b.orderbook.AddBuy(bestPrice)
 				bestPrice = b.orderbook.TopPriceBuySide()
-				fmt.Println(bestPrice)
 			}
 		}
 		if owned.curr != startCurr {

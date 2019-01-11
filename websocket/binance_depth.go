@@ -56,9 +56,6 @@ type OrderEvent struct {
 var queueBinChan = make(chan *BinanceDepthEvent)
 var quitBinQueueChan = make(chan int)
 
-// Skiplist Binance OrderBook
-var binOrderBook *orderbook.OrderBook
-
 // Keep track of lastUpdateID of the first snapshot, needed to correctly add websocket events
 var lastUpdateID int64 = -1
 
@@ -122,7 +119,6 @@ func AddBinanceAskEventToSkipList(sl *orderbook.OrderBook, v *binance.Ask) {
 
 // InitBinanceHandler is used to initialize orderbook and websocket handler
 func InitBinanceHandler() {
-	binOrderBook = orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT]
 	if lastUpdateID != -1 {
 		lastUpdateID = -1
 		prevu = -1
@@ -148,7 +144,6 @@ var wsDepthHandler = func(event *binance.WsDepthEvent) {
 
 	// Put the data received inside the queue
 	queueBinChan <- &data
-	// fmt.Println("UPDATE", "first", data.FirstUpdateID, "final", data.FinalUpdateID)
 }
 
 var depthErrHandler = func(err error) {
@@ -159,7 +154,6 @@ var depthErrHandler = func(err error) {
 func GetDepthFromBinance() {
 	doneC, _, err := binance.WsDepthServe(binanceSymbol, wsDepthHandler, depthErrHandler)
 	if err != nil {
-		// fmt.Println("error", "err", err.Error())
 		return
 	}
 	<-doneC
@@ -170,11 +164,10 @@ func manageBinanceOrderBook() {
 	// Get the data from the order book
 	depth := getBinanceDepth()
 	// add bids and asks into the skiplist orderbook
-	AddBinOrderBookToSkipList(binOrderBook, depth.Bids, depth.Asks)
+	AddBinOrderBookToSkipList(orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT], depth.Bids, depth.Asks)
 	// update the lastUpdateID of the snapshot
 	lastUpdateID = depth.LastUpdateID
-	// fmt.Println("LastUpdateID", "FIRST LUI", lastUpdateID)
-	fmt.Println("Binance Orderbook Initialized")
+	fmt.Println("Binance Orderbook Initialized, empty: ", orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT].Empty())
 }
 
 // Function to manage queue channel.
@@ -187,8 +180,6 @@ func manageBinanceQueue() {
 		if lastUpdateID != -1 {
 			v, ok := <-queueBinChan
 			if ok {
-				// fmt.Println("MQ", "LASTUPDATEID", lastUpdateID)
-				// fmt.Println("MQ", "PREVU", prevu)
 				// ignore events where u <= lastUpdateID
 				if v.FinalUpdateID <= lastUpdateID {
 					continue
@@ -197,31 +188,28 @@ func manageBinanceQueue() {
 				if prevu == -1 && v.FirstUpdateID <= lastUpdateID+1 && v.FinalUpdateID >= lastUpdateID+1 {
 					// Add the bids and asks to the SkipList OrderBook
 					for _, elem := range v.Bids {
-						AddBinanceBidEventToSkipList(binOrderBook, &elem)
+						AddBinanceBidEventToSkipList(orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT], &elem)
 					}
 					for _, elem := range v.Asks {
-						AddBinanceAskEventToSkipList(binOrderBook, &elem)
+						AddBinanceAskEventToSkipList(orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT], &elem)
 					}
 					prevu = v.FinalUpdateID
 					// for testing purposes
-					// fmt.Println("MANAGE QUEUE", "first", v.FirstUpdateID, "final", v.FinalUpdateID)
 				} else if prevu != -1 && v.FirstUpdateID == prevu+1 {
 					// Add the bids and asks to the SkipList OrderBook
 					for _, elem := range v.Bids {
-						AddBinanceBidEventToSkipList(binOrderBook, &elem)
+						AddBinanceBidEventToSkipList(orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT], &elem)
 					}
 					for _, elem := range v.Asks {
-						AddBinanceAskEventToSkipList(binOrderBook, &elem)
+						AddBinanceAskEventToSkipList(orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT], &elem)
 					}
 					prevu = v.FinalUpdateID
 					// for testing purposes
-					// fmt.Println("MANAGE QUEUE", "first", v.FirstUpdateID, "final", v.FinalUpdateID)
 				}
 			}
 		} else {
 			_, ok := <-quitBinQueueChan
 			if ok {
-				// fmt.Println("quit")
 				return
 			}
 		}
@@ -231,20 +219,17 @@ func manageBinanceQueue() {
 func getBinanceDepth() binance.DepthResponse {
 	response, err := http.Get("https://www.binance.com/api/v1/depth?symbol=ETHUSDT&limit=1000")
 	if err != nil {
-		// fmt.Println("error", "err", err.Error())
 		return binance.DepthResponse{}
 	}
 	defer response.Body.Close()
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		// fmt.Println("Error: ", "err", err)
 		return binance.DepthResponse{}
 	}
 	// unmarshal JSON response
 	depthResponse := BinanceDepthResponse{}
 	jsonErr := json.Unmarshal(contents, &depthResponse)
 	if jsonErr != nil {
-		// fmt.Println("Error: ", "err", jsonErr)
 		return binance.DepthResponse{}
 	}
 
@@ -252,5 +237,17 @@ func getBinanceDepth() binance.DepthResponse {
 		LastUpdateID: depthResponse.LastUpdateID,
 	}
 
+	for _, e := range depthResponse.Bids {
+		depthToReturn.Bids = append(depthToReturn.Bids, binance.Bid{
+			Price:    e[0].(string),
+			Quantity: e[1].(string),
+		})
+	}
+	for _, e := range depthResponse.Asks {
+		depthToReturn.Asks = append(depthToReturn.Asks, binance.Ask{
+			Price:    e[0].(string),
+			Quantity: e[1].(string),
+		})
+	}
 	return depthToReturn
 }

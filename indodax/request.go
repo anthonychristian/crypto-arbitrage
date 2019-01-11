@@ -56,9 +56,11 @@ func (i *IndodaxAPI) GetDepth(symbol string) (dat Depth) {
 	// build request
 	resp, body, errs := i.req.Get(publicBaseURL + symbol + depthEndpoint).
 		End()
-	if resp.StatusCode != 200 || errs != nil {
+	if resp == nil || resp.StatusCode != 200 || errs != nil {
 		//error handling here
-		return dat
+		// log.Fatal(dat, errs[0].Error())
+		// return dat
+		return Depth{}
 	}
 	err := json.Unmarshal([]byte(body), &dat)
 	if err != nil {
