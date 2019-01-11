@@ -41,19 +41,9 @@ func main() {
 	app.Run(iris.Addr(":8080"))
 }
 
-func updateDepthToWorker() {
-	worker := indodax.InitWorker()
-	ticker := time.NewTicker(5 * time.Second)
-	go func() {
-		for range ticker.C {
-			d := indodax.IndodaxInstance.GetDepth("eth_idr")
-			worker.PushDepthUpdate(d)
-		}
-	}()
-}
-
 func initOrderbookWebsocket() {
 	go websocket.InitBinanceHandler()
+	go indodax.InitAllWorker()
 }
 
 func setupWebsocket(app *iris.Application) {

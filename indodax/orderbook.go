@@ -4,12 +4,14 @@ import (
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
-var idxOrderBook *orderbook.OrderBook
+var idxOrderBooks map[orderbook.Symbol]*orderbook.OrderBook
 
 func InitOrderBook() {
-	idxOrderBook = orderbook.Exchanges[orderbook.Indodax].Books[orderbook.ETH_IDR]
+	idxOrderBooks = make(map[orderbook.Symbol]*orderbook.OrderBook)
+	idxOrderBooks[orderbook.ETH_IDR] = orderbook.Exchanges[orderbook.Indodax].Books[orderbook.ETH_IDR]
+	idxOrderBooks[orderbook.USDT_IDR] = orderbook.Exchanges[orderbook.Indodax].Books[orderbook.USDT_IDR]
 }
 
-func GetOB() *orderbook.OrderBook {
-	return idxOrderBook
+func GetOB(symbol orderbook.Symbol) *orderbook.OrderBook {
+	return idxOrderBooks[symbol]
 }

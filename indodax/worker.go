@@ -3,26 +3,37 @@ package indodax
 
 import (
 	"strconv"
+	"strings"
+	"time"
 
+	"github.com/anthonychristian/crypto-arbitrage/indodax"
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
 // Worker is the main engine for making order decisions
 // and continuing arbitrage loop ETH -> IDR -> USDT
 type Worker struct {
-	depth chan Depth
-	halt  bool
+	depth  chan Depth
+	halt   bool
+	symbol orderbook.Symbol
 }
 
-var WorkerInstance *Worker
+var IndodaxWorkers map[orderbook.Symbol]*Worker
+
+func InitAllWorkers() {
+	for _, symbol := range orderbook.ExSymbolMap[orderbook.Indodax] {
+		worker := InitWorker(symbol)
+		updateDepthToWorker(worker, symbol)
+	}
+}
 
 // InitWorker instances
-func InitWorker() *Worker {
+func InitWorker(symbol orderbook.Symbol) *Worker {
 	newWorker := &Worker{
 		depth: make(chan Depth),
 	}
-	WorkerInstance = newWorker
-	go WorkerInstance.work()
+	IndodaxWorkers[symbol] = newWorker
+	go IndodaxWorkers[symbol].work()
 	return newWorker
 }
 
@@ -46,12 +57,12 @@ func (w *Worker) work() {
 		select {
 		case d := <-w.depth:
 			// add depth to orderbook
-			updateDepth(d)
+			updateDepth(d, w.symbol)
 		}
 	}
 }
 
-func updateDepth(d Depth) {
+func updateDepth(d Depth, symbol orderbook.Symbol) {
 	// TODO update the indodax's orderbook (ETHEREUM)
 	for _, elem := range d.Buy {
 		q, err := strconv.ParseFloat(elem[1].(string), 64)
@@ -62,7 +73,7 @@ func updateDepth(d Depth) {
 			Price: elem[0].(float64),
 			Qty:   q,
 		}
-		idxOrderBook.AddBuy(newOrder)
+		idxOrderBooks[symbol].AddBuy(newOrder)
 	}
 	for _, elem := range d.Sell {
 		q, err := strconv.ParseFloat(elem[1].(string), 64)
@@ -73,6 +84,17 @@ func updateDepth(d Depth) {
 			Price: elem[0].(float64),
 			Qty:   q,
 		}
-		idxOrderBook.AddSell(newOrder)
+		idxOrderBooks[symbol].AddSell(newOrder)
 	}
+}
+
+func updateDepthToWorker(worker *Worker, symbol orderbook.Symbol) {
+	symbolString := strings.ToLower(orderbook.GetLeftCurrency(symbol) + "_" + orderbook.GetRightCurrency(symbol))
+	ticker := time.NewTicker(5 * time.Second)
+	go func() {
+		for range ticker.C {
+			d := indodax.IndodaxInstance.GetDepth(symbolString)
+			worker.PushDepthUpdate(d)
+		}
+	}()
 }
