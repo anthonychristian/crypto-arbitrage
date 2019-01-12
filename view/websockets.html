@@ -91,6 +91,11 @@
     </tbody>
 </table>
 
+<pre id="arbit_update"></pre>
+
+<pre>Hedge Opportunities will be listed below:</pre></br>
+<pre id="arbit_hedge"></pre>
+
 
 </body>
     
@@ -154,7 +159,8 @@
     var top_10_asks = document.getElementById("top_10_asks");
     var best_bid = document.getElementById("best_bid");
     var best_ask = document.getElementById("best_ask");
-
+    var arbit_update = document.getElementById("arbit_update");
+    var arbit_hedge = document.getElementById("arbit_hedge");
     // Ws comes from the auto-served '/iris-ws.js'
     var socket = new Ws(wsURL)
     socket.OnConnect(function () {
@@ -204,6 +210,13 @@
     socket.On("bestAsk", function (msg) {
         addPriceMessage(msg, "ask");
     });
+    socket.On("arbit_update", function (msg) {
+        addArbitMessage(msg);
+    });
+    socket.On("arbit_hedge", function (msg) {
+        addArbitHedgeMessage(msg);
+    });
+
 
     function addMessage(msg, exchange) {
         var obj = JSON.parse(msg);
@@ -220,6 +233,16 @@
         for (var price in asksMap) {
             asks.innerHTML += "<br>" + price + ":" + asksMap[price];
         }
+    }
+
+    function addArbitMessage(msg){
+        arbit_update.innerHTML = msg
+    }
+    function addArbitHedgeMessage(msg){var today = new Date();
+        var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+        var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+        var dateTime = date+' '+time;
+        arbit_hedge.innerHTML += dateTime + ": " + msg
     }
 
     function addOrderMessage(msg, side, exchange) {

@@ -6,6 +6,8 @@ package indodax
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -54,15 +56,18 @@ func InitIndodax(api, secret string) *IndodaxAPI {
 func (i *IndodaxAPI) GetDepth(symbol string) (dat Depth) {
 	// check if symbol is valid
 	// build request
-	resp, body, errs := i.req.Get(publicBaseURL + symbol + depthEndpoint).
-		End()
-	if resp == nil || resp.StatusCode != 200 || errs != nil {
-		//error handling here
-		// log.Fatal(dat, errs[0].Error())
-		// return dat
+	resp, err := http.Get(publicBaseURL + symbol + depthEndpoint)
+	if err != nil {
 		return Depth{}
 	}
-	err := json.Unmarshal([]byte(body), &dat)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return Depth{}
+	}
+	if resp == nil || resp.StatusCode != 200 || err != nil {
+		return Depth{}
+	}
+	err = json.Unmarshal([]byte(body), &dat)
 	if err != nil {
 		fmt.Println("error when unmarshalling the body")
 		return dat

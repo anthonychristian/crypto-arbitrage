@@ -83,7 +83,7 @@ func AddBinOrderBookToSkipList(sl *orderbook.OrderBook, bids []binance.Bid, asks
 		sl.AddSell(newOrder)
 	}
 	for _, worker := range trade.TradeWorkers[orderbook.Binance] {
-		worker.ObUpdated <- true
+		worker.ObUpdated <- orderbook.Binance
 	}
 }
 
@@ -97,7 +97,7 @@ func AddBinanceBidEventToSkipList(sl *orderbook.OrderBook, v *binance.Bid) {
 	}
 	sl.AddBuy(orderToAdd)
 	for _, worker := range trade.TradeWorkers[orderbook.Binance] {
-		worker.ObUpdated <- true
+		worker.ObUpdated <- orderbook.Binance
 	}
 }
 
@@ -111,7 +111,7 @@ func AddBinanceAskEventToSkipList(sl *orderbook.OrderBook, v *binance.Ask) {
 	}
 	sl.AddSell(orderToAdd)
 	for _, worker := range trade.TradeWorkers[orderbook.Binance] {
-		worker.ObUpdated <- true
+		worker.ObUpdated <- orderbook.Binance
 	}
 }
 

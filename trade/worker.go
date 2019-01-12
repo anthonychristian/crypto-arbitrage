@@ -2,21 +2,25 @@ package trade
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
 )
 
 type Worker struct {
-	ObUpdated chan bool
+	ObUpdated chan orderbook.ExchangeKey
 	halt      chan bool
 	pairs     []Pair
 }
 
+var TradeUpdate chan string
+var TradeHedge chan string
+
 // InitWorker instances
 func InitWorker(pairs []Pair) *Worker {
+	TradeUpdate = make(chan string)
+	TradeHedge = make(chan string)
 	newWorker := &Worker{
-		ObUpdated: make(chan bool),
+		ObUpdated: make(chan orderbook.ExchangeKey),
 		halt:      make(chan bool),
 		pairs:     pairs,
 	}
@@ -47,19 +51,23 @@ func (w *Worker) work() {
 
 func tradeWorker(pairs []Pair, exchanges orderbook.ExchangeMap) {
 	var totalQty float64
-	ticker := time.NewTicker(1 * time.Second)
-	for range ticker.C {
-		start, end, qty, notProfitable, err := detectArbitrage(pairs, exchanges)
+	var totalEndQty float64
+	for {
+		start, end, notProfitable, err := detectArbitrage(pairs, exchanges)
 		if err != nil {
 			if notProfitable && totalQty > 0 {
-				// HEDGE
-				fmt.Println("HEDGE NOW start:", start, "end:", end, "qty:", qty, "totalQty:", totalQty)
+				TradeHedge <- fmt.Sprintln("HEDGE NOW start:", totalQty, "end:", totalEndQty, "totalProfit:", totalEndQty-totalQty)
+				TradeUpdate <- fmt.Sprintln("HEDGE NOW start:", totalQty, "end:", totalEndQty, "totalProfit:", totalEndQty-totalQty)
+				return
 			} else {
 				totalQty = 0
-				fmt.Println(start, end, qty, notProfitable, err)
+				TradeUpdate <- fmt.Sprintln(err)
+				return
 			}
+		} else {
+			totalQty += start
+			totalEndQty += end
 		}
-		totalQty += qty
 	}
 }
 

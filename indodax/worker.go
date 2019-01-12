@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/anthonychristian/crypto-arbitrage/orderbook"
+	"github.com/anthonychristian/crypto-arbitrage/trade"
 )
 
 // Worker is the main engine for making order decisions
@@ -86,6 +87,10 @@ func updateDepth(d Depth, symbol orderbook.Symbol) {
 			Qty:   q,
 		}
 		orderbook.Exchanges[orderbook.Indodax].Books[symbol].AddSell(newOrder)
+	}
+
+	for _, worker := range trade.TradeWorkers[orderbook.Indodax] {
+		worker.ObUpdated <- orderbook.Indodax
 	}
 }
 

@@ -34,7 +34,7 @@ func (ob *OrderBook) AddSell(order Order) {
 func add(order Order, book *skiplist.SkipList) {
 	priceKey := decimal.NewFromFloat(order.Price)
 	if _, ok := book.Get(priceKey); ok { // Existing price level, append order
-		if order.Qty == 0 {
+		if order.Qty <= 0 {
 			book.Delete(priceKey)
 			return
 		}

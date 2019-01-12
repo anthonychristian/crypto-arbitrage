@@ -42,25 +42,23 @@ func (s *TradeSuite) TestTrade() {
 		exchange: orderbook.Indodax,
 		side:     Buy,
 	}
-	start, end, qty, notProfitable, err := detectArbitrage([]Pair{pair1, pair2, pair3})
+	exchanges := copy(orderbook.Exchanges)
+	start, end, notProfitable, err := detectArbitrage([]Pair{pair1, pair2, pair3}, exchanges)
 	s.T().Log(start)
 	s.T().Log(end)
-	s.T().Log(qty)
 	assert := assert.New(s.T())
 	assert.True(err != nil)
 	assert.True(notProfitable)
-	assert.Equal(990.5135725590688, qty)
 
 	best1, best2, best3 = CreateDummyExchangesNotProfitableQty()
-	start, end, qty, notProfitable, err = detectArbitrage([]Pair{pair1, pair2, pair3})
+	exchanges = copy(orderbook.Exchanges)
+	start, end, notProfitable, err = detectArbitrage([]Pair{pair1, pair2, pair3}, exchanges)
 	binance_eth_usdt := orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT]
 	idx_eth_idr := orderbook.Exchanges[orderbook.Indodax].Books[orderbook.ETH_IDR]
 	idx_usdt_idr := orderbook.Exchanges[orderbook.Indodax].Books[orderbook.USDT_IDR]
 	s.T().Log(start)
 	s.T().Log(end)
-	s.T().Log(qty)
 	assert.True(err != nil)
-	assert.Equal(1021.5982950714285, qty)
 	assert.True(notProfitable)
 	assert.Equal(((((start/150)*(1-0.001))-0.01)*2283000*(1-0.003)/14700*(1-0.003))-5, end)
 
@@ -84,16 +82,15 @@ func (s *TradeSuite) TestTrade() {
 	}
 
 	best1, best2, best3 = CreateDummyExchangesProfitable()
-	start, end, qty, notProfitable, err = detectArbitrage([]Pair{pair1, pair2, pair3})
+	exchanges = copy(orderbook.Exchanges)
+	start, end, notProfitable, err = detectArbitrage([]Pair{pair1, pair2, pair3}, exchanges)
 	binance_eth_usdt = orderbook.Exchanges[orderbook.Binance].Books[orderbook.ETH_USDT]
 	idx_eth_idr = orderbook.Exchanges[orderbook.Indodax].Books[orderbook.ETH_IDR]
 	idx_usdt_idr = orderbook.Exchanges[orderbook.Indodax].Books[orderbook.USDT_IDR]
 	s.T().Log(start)
 	s.T().Log(end)
-	s.T().Log(qty)
 	s.T().Log(err)
 	assert.False(err != nil)
-	assert.Equal(1021.5982950714285, qty)
 	assert.False(notProfitable)
 	assert.Equal(((((start/150)*(1-0.001))-0.01)*2283000*(1-0.003)/14700*(1-0.003))-5, end)
 

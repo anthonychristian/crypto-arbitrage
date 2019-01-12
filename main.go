@@ -86,4 +86,15 @@ func handleConnection(c irisWs.Connection) {
 			}
 		}
 	}()
+
+	go func() {
+		for {
+			select {
+			case x := <-trade.TradeUpdate:
+				c.Emit("arbit_update", x)
+			case x := <-trade.TradeHedge:
+				c.Emit("arbit_hedge", x)
+			}
+		}
+	}()
 }
