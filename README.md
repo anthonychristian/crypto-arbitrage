@@ -1,2 +1,1 @@
 # crypto-arbitrage
-Prints Money
